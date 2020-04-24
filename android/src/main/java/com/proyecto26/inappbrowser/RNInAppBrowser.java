@@ -19,6 +19,8 @@ import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.JSApplicationIllegalArgumentException;
 
+import android.content.pm.PackageManager;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -62,6 +64,25 @@ public class RNInAppBrowser {
     }
 
     CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+    CustomTabsIntent intentCustomTabs = builder.build();
+    try {
+         PackageManager mgr = context.getPackageManager();
+         if(mgr.getApplicationInfo("com.android.chrome", 0).enabled){
+            intentCustomTabs.intent.setPackage("com.android.chrome");
+            intentCustomTabs.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+         }else{
+          mOpenBrowserPromise.reject(ERROR_CODE,"browser not found");
+          mOpenBrowserPromise = null;
+          return;
+         }
+    }
+    catch (PackageManager.NameNotFoundException e) {
+      mOpenBrowserPromise.reject(ERROR_CODE," not found");
+      mOpenBrowserPromise = null;
+      return;
+    }
+
+
     if (options.hasKey(KEY_TOOLBAR_COLOR)) {
       final String colorString = options.getString(KEY_TOOLBAR_COLOR);
       try {
